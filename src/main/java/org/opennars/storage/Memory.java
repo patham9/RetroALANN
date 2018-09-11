@@ -81,7 +81,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
 
     /* List of new tasks accumulated in one cycle, to be processed in the next cycle */
     public final Deque<Task> inputTasks;
-    public final PriorityMap derivedTasks;
+    public final PriorityMap cyclingTasks;
     
     //Boolean localInferenceMutex = false;
     
@@ -98,7 +98,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
         this.event = new EventEmitter();
         this.concepts = concepts;             
         this.inputTasks = new ArrayDeque<>();
-        this.derivedTasks = new PriorityMap(narParameters.TASK_LINK_BAG_SIZE);
+        this.cyclingTasks = new PriorityMap(narParameters.TASK_LINK_BAG_SIZE);
         this.operators = new HashMap<>();
         reset();
     }
@@ -191,7 +191,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
      * add new task that waits to be processed in the next cycleMemory
      */
     public void addNewTask(final Task t, final String reason) {
-        inputTasks.add(t);
+        GeneralInferenceControl.addTask(this, t, reason.startsWith("Derived"));
         emit(Events.TaskAdd.class, t, reason);
         output(t);
     }
@@ -306,7 +306,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
         event.emit(Events.CycleStart.class);
         
     //if(noResult()) //newTasks empty
-        GeneralInferenceControl.ALANNCircle(this, inputs.narParameters, inputs);
+        GeneralInferenceControl.ALANNCircle(this, inputs);
         
         event.emit(Events.CycleEnd.class);
         event.synch();

@@ -35,9 +35,12 @@ import org.opennars.storage.Memory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import static org.opennars.inference.BudgetFunctions.rankBelief;
 import org.opennars.io.events.Events;
+import org.opennars.main.Parameters;
 
 /**
  * Concept as defined by the NARS-theory
@@ -49,7 +52,7 @@ import org.opennars.io.events.Events;
  */
 public class Concept extends Item<Term> implements Serializable {
 
-    
+    public long lastFireTime = -1000;
     /**
      * The term is the unique ID of the concept
      */
@@ -59,7 +62,7 @@ public class Concept extends Item<Term> implements Serializable {
      * Link templates of TermLink, only in concepts with CompoundTerm Templates
      * are used to improve the efficiency of TermLink building
      */
-    public final List<Term> termTemplates;
+    public final Map<Term,TermLink> termLinkTemplates;
 
     /**
      * Judgments directly made about the term Use List because of access
@@ -98,9 +101,9 @@ public class Concept extends Item<Term> implements Serializable {
         this.beliefs = new ArrayList<>();
         
         if (tm instanceof CompoundTerm) {
-            this.termTemplates = ((CompoundTerm) tm).prepareComponents();
+            this.termLinkTemplates = ((CompoundTerm) tm).prepareComponentLinks();
         } else {
-            this.termTemplates = null;
+            this.termLinkTemplates = null;
         }
 
     }
@@ -147,25 +150,24 @@ public class Concept extends Item<Term> implements Serializable {
      * @param task The task to be linked
      * @param content The content of the task
      */
-    public void addToBeliefs(final Task task, final DerivationContext nal) {
-        if(!task.sentence.isJudgment()) {
-            return;
+    public void addToBeliefsConceptualizingComponents(final Task task, final Parameters narParameters) {
+        //memory.conceptualize(task.budget, CompoundTerm.replaceIntervals(task.getTerm()));
+        if(task.sentence.isJudgment()) {
+            this.addToTable(task, true, beliefs, narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
         }
-        memory.conceptualize(task.budget, CompoundTerm.replaceIntervals(task.getTerm()));
-        this.addToTable(task, true, beliefs, nal.narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
         if (!(term instanceof CompoundTerm)) {
             return;
         }
-        if (termTemplates.isEmpty()) {
+        if (termLinkTemplates.isEmpty()) {
             return;
         }
 
-        for (final Term componentTerm : termTemplates) {
+        for (final Term componentTerm : termLinkTemplates.keySet()) {
             final Concept componentConcept = memory.conceptualize(task.budget, componentTerm);
 
-            if (componentConcept != null) {
+            if (componentConcept != null && task.sentence.isJudgment()) {
                 synchronized(componentConcept) {
-                    componentConcept.addToTable(task, true, beliefs, nal.narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
+                    componentConcept.addToTable(task, true, componentConcept.beliefs, narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
                 }
             }
         };
@@ -284,14 +286,14 @@ public class Concept extends Item<Term> implements Serializable {
      *
      * @return The template get
      */
-    public List<Term> getTermTemplates() {
-        return termTemplates;
+    public Map<Term,TermLink> getTermLinkTemplates() {
+        return termLinkTemplates;
     }
 
     @Override
     public void end() {        
         beliefs.clear();
-        termTemplates.clear();
+        termLinkTemplates.clear();
     }
 
     public void discountConfidence(final boolean onBeliefs) {

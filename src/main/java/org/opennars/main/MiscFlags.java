@@ -31,12 +31,12 @@ public class MiscFlags {
     /** Show errors in reasoning cycle, they are not fatal but ideally should not be hidden, recommended.*/
     public static final boolean SHOW_REASONING_ERRORS = true;
     /** Whether the system should try to continue after the occurrence of a reasoning error, recommended as not all cases might be tested*/
-    public static final boolean REASONING_ERRORS_CONTINUE = true;
+    public static final boolean REASONING_ERRORS_CONTINUE = false;
     
     /** Show execution errors in operators, they ideally should not be hidden, recommended.*/
     public static final boolean SHOW_EXECUTION_ERRORS = true;
     /** Whether the system should try to continue after the occurrence of an execution error, recommended as they are not always avoidable*/
-    public static final boolean EXECUTION_ERRORS_CONTINUE = true;
+    public static final boolean EXECUTION_ERRORS_CONTINUE = false;
     
     /** Show input errors, not recommended as the program that uses NARS should handle them by itself */
     public static final boolean SHOW_INPUT_ERRORS = false;

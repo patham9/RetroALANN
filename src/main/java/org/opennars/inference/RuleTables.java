@@ -52,30 +52,25 @@ public class RuleTables {
      * @param tLink The selected TaskLink, which will provide a task
      * @param bLink The selected TermLink, which may provide a belief
      */
-    public static void reason(final TaskLink tLink, final TermLink bLink, final DerivationContext nal) {
+    public static void reason(final Task task, final Sentence belief, Term subterm, final DerivationContext nal) {
 
         // REFACTOR< the body should be split into another static function >
 
         final Memory memory = nal.mem();
-        
-        final Task task = nal.getCurrentTask();
         final Sentence taskSentence = task.sentence;
         
         final Term taskTerm = taskSentence.term;         // cloning for substitution
-        Term beliefTerm = bLink.target;       // cloning for substitution
+        Term beliefTerm = belief.term;       // cloning for substitution
+        
+        final Term tasklinkTerm = CompoundTerm.replaceIntervals(taskSentence.term);         // cloning for substitution
+        Term beliefLinkTerm = CompoundTerm.replaceIntervals(belief.term);       // cloning for substitution
         
         final Concept beliefConcept = memory.concept(beliefTerm);
-        
-        Sentence belief = null;
-        if(beliefConcept != null) {
-            synchronized(beliefConcept) { //we only need the target concept to select a belief
-                belief = beliefConcept.getBelief(nal, task);
-            }
-        }
+        Concept taskConcept = memory.concept(taskTerm);
         
         nal.setCurrentBelief( belief );
         
-        if (belief != null) {   
+        if (belief != null && beliefConcept != null) {   
             beliefTerm = belief.term; //because interval handling that differs on conceptual level
             
           /*Sentence belief_event = beliefConcept.getBeliefForTemporalInference(task);
@@ -119,8 +114,12 @@ public class RuleTables {
         /*if ((memory.getNewTaskCount() > 0) && taskSentence.isJudgment()) {
             return;
         }*/
-
-        applyRuleTable(tLink, bLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+        
+        TaskLink virtualTaskLink = new TaskLink(task, taskConcept.termLinkTemplates.get(subterm), task.budget, 1); //always SELF, as if task is innate!
+        TermLink virtualTermLink = taskConcept.termLinkTemplates.get(subterm);
+        if(virtualTermLink != null) {
+            applyRuleTable(virtualTaskLink, virtualTermLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+        }
     }
 
     private static void applyRuleTable(TaskLink tLink, TermLink bLink, DerivationContext nal, Task task, Sentence taskSentence, Term taskTerm, Term beliefTerm, Sentence belief) {

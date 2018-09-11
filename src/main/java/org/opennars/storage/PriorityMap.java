@@ -72,6 +72,9 @@ public class PriorityMap<K,V extends Item<K>> implements Serializable {
     }
     
     public V takeHighestPriorityItem() {
+        if(queue.isEmpty()) {
+            return null;
+        }
         return queue.pollLast();
     }
     
@@ -83,5 +86,9 @@ public class PriorityMap<K,V extends Item<K>> implements Serializable {
         final float relativeThreshold = m.narParameters.QUALITY_RESCALED;
         BudgetFunctions.applyForgetting(oldItem.budget, forgetCycles, relativeThreshold);
         return putIn(oldItem);
+    }
+    
+    public boolean isEmpty() {
+        return this.queue.isEmpty();
     }
 }
