@@ -288,26 +288,6 @@ public final class CompositionalRules {
             budget = BudgetFunctions.compoundBackward(content, nal);
             nal.getTheNewStamp().setOccurrenceTime(occurrence_time);
             nal.doublePremiseTask(content, truth, budget, false, false);
-            // special inference to answer conjunctive questions with query variables
-            if (taskSentence.term.hasVarQuery()) {
-                final Concept contentConcept = nal.mem().concept(content);
-                if (contentConcept == null) {
-                    return;
-                }
-                final Sentence contentBelief = contentConcept.getBelief(nal, task);
-                if (contentBelief == null) {
-                    return;
-                }
-
-                final Task contentTask = new Task(contentBelief, task.budget, Task.EnumType.DERIVED);
-
-                nal.setCurrentTask(contentTask);
-                final Term conj = Conjunction.make(component, content);
-                truth = intersection(contentBelief.truth, belief.truth, nal.narParameters);
-                budget = BudgetFunctions.compoundForward(truth, conj, nal);
-                nal.getTheNewStamp().setOccurrenceTime(occurrence_time);
-                nal.doublePremiseTask(conj, truth, budget, false, false);
-            }
         } else {
             final TruthValue v1 = compoundTask ? taskSentence.truth : belief.truth;
             final TruthValue v2 = compoundTask ? belief.truth : taskSentence.truth;

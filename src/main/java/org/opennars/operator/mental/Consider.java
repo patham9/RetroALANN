@@ -58,13 +58,7 @@ public class Consider extends Operator {
      */
     @Override
     protected List<Task> execute(final Operation operation, final Term[] args, final Memory memory, final Timable time) {
-        final Term term = args[1];
-        
-        final Concept concept = memory.conceptualize(Consider.budgetMentalConcept(operation), term);
-        
-        final DerivationContext cont = new DerivationContext(memory, memory.narParameters, time);
-        cont.setCurrentConcept(concept);
-        GeneralInferenceControl.fireConcept(cont, 1);
+        System.out.println("^consider not implemented!");
         
         return null;
     }

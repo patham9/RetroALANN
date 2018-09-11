@@ -118,27 +118,9 @@
     <!-- plugins -->
     <plugins>
         <!-- plugins -->
-        <plugin classpath="org.opennars.plugin.mental.Emotions">
-            <arg type="float.class" value="0.25" name="HAPPY_EVENT_LOWER_THRESHOLD"/>
-            <arg type="float.class" value="0.75" name="HAPPY_EVENT_HIGHER_THRESHOLD"/>
-            <arg type="float.class" value="0.1" name="BUSY_EVENT_LOWER_THRESHOLD"/>
-            <arg type="float.class" value="0.9" name="BUSY_EVENT_HIGHER_THRESHOLD"/>
-            <arg type="int.class" value="1000" name="CHANGE_STEPS_DEMANDED"/>
-        </plugin>
         <plugin classpath="org.opennars.operator.mental.Anticipate">
             <arg type="float.class" value="0.1" name="ANTICIPATION_DURABILITY_MUL"/>
             <arg type="float.class" value="0.1" name="ANTICIPATION_PRIORITY_MUL"/>
-        </plugin>
-        <plugin classpath="org.opennars.plugin.mental.InternalExperience">
-            <arg type="float.class" value="0.3" name="MINIMUM_PRIORITY_TO_CREATE_WANT_BELIEVE_ETC"/>
-            <arg type="float.class" value="0.3" name="MINIMUM_PRIORITY_TO_CREATE_WONDER_EVALUATE"/>
-            <arg type="float.class" value="0.0001" name="INTERNAL_EXPERIENCE_PROBABILITY"/>
-            <arg type="float.class" value="0.000025" name="INTERNAL_EXPERIENCE_RARE_PROBABILITY"/>
-            <arg type="float.class" value="0.1" name="INTERNAL_EXPERIENCE_DURABILITY_MUL"/>
-            <arg type="float.class" value="0.1" name="INTERNAL_EXPERIENCE_PRIORITY_MUL"/>
-            <arg type="boolean.class" value="true" name="ALLOW_WANT_BELIEF"/>
-            <arg type="boolean.class" value="false" name="OLD_BELIEVE_WANT_EVALUATE_WONDER_STRATEGY"/>
-            <arg type="boolean.class" value="false" name="FULL_REFLECTION"/>
         </plugin>
 
         <plugin classpath="org.opennars.plugin.perception.VisionChannel">
@@ -221,9 +203,6 @@
         <plugin classpath="org.opennars.operator.mental.Hesitate"/>
 
         <plugin classpath="org.opennars.operator.misc.Reflect"/>
-
-        <plugin classpath="org.opennars.operator.mental.FeelSatisfied"/>
-        <plugin classpath="org.opennars.operator.mental.FeelBusy"/>
 
         <plugin classpath="org.opennars.operator.misc.Count"/>
         <plugin classpath="org.opennars.operator.misc.Add"/>

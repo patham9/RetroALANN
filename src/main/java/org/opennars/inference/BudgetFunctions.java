@@ -77,43 +77,16 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion of revision
      * @return The budget for the new task
      */
-    static BudgetValue revise(final TruthValue tTruth, final TruthValue bTruth, final TruthValue truth, final boolean feedbackToLinks, final org.opennars.control.DerivationContext nal) {
+    static BudgetValue revise(final TruthValue tTruth, final TruthValue bTruth, final TruthValue truth, final org.opennars.control.DerivationContext nal) {
         final float difT = truth.getExpDifAbs(tTruth);
         final Task task = nal.getCurrentTask();
         task.decPriority(1 - difT);
         task.decDurability(1 - difT);
-        if (feedbackToLinks) {
-            final TaskLink tLink = nal.getCurrentTaskLink();
-            tLink.decPriority(1 - difT);
-            tLink.decDurability(1 - difT);
-            final TermLink bLink = nal.getCurrentBeliefLink();
-            final float difB = truth.getExpDifAbs(bTruth);
-            bLink.decPriority(1 - difB);
-            bLink.decDurability(1 - difB);
-        }
         final float dif = truth.getConfidence() - max(tTruth.getConfidence(), bTruth.getConfidence());
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
         final float quality = truthToQuality(truth);
-        
-        /*
-        if (priority < 0) {
-            memory.nar.output(ERR.class, 
-                    new IllegalStateException("BudgetValue.revise resulted in negative priority; set to 0"));
-            priority = 0;
-        }
-        if (durability < 0) {
-            memory.nar.output(ERR.class, 
-                    new IllegalStateException("BudgetValue.revise resulted in negative durability; set to 0; aveAri(dif=" + dif + ", task.getDurability=" + task.getDurability() +") = " + durability));
-            durability = 0;
-        }
-        if (quality < 0) {
-            memory.nar.output(ERR.class, 
-                    new IllegalStateException("BudgetValue.revise resulted in negative quality; set to 0"));
-            quality = 0;
-        }
-        */
-        
+       
         return new BudgetValue(priority, durability, quality, nal.narParameters);
     }
 
@@ -133,19 +106,6 @@ public final class BudgetFunctions extends UtilityFunctions {
         return new BudgetValue(priority, durability, quality, narParameters);
     }
 
-    /* ----------------------- Links ----------------------- */
-    /**
-     * Distribute the budget of a task among the links to it
-     *
-     * @param b The original budget
-     * @param n Number of links
-     * @return Budget value for each link
-     */
-    public static BudgetValue distributeAmongLinks(final BudgetValue b, final int n, Parameters narParameters) {
-        final float priority = (float) (b.getPriority() / sqrt(n));
-        return new BudgetValue(priority, b.getDurability(), b.getQuality(), narParameters);
-    }
-
     public enum Activating {
         Max, TaskLink
     }
@@ -158,19 +118,9 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param receiver The budget receiving the activation
      * @param amount The budget for the new item
      */
-    public static void activate(final BudgetValue receiver, final BudgetValue amount, final Activating mode) {
-        switch (mode) {
-            case Max:
-                BudgetFunctions.merge(receiver, amount);
-                break;
-            case TaskLink:                
-                final float oldPri = receiver.getPriority();
-                receiver.setPriority( or(oldPri, amount.getPriority()) );
-                receiver.setDurability( aveAri(receiver.getDurability(), amount.getDurability()) );
-                receiver.setQuality( receiver.getQuality() );
-                break;
-        }
-        
+    public static void activate(final BudgetValue receiver, final BudgetValue amount) {
+        final float oldPri = receiver.getPriority();
+        receiver.setPriority( or(oldPri, amount.getPriority()) );
     }
 
     /* ---------------- Bag functions, on all Items ------------------- */
@@ -299,21 +249,16 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return Budget of the conclusion task
      */
     private static BudgetValue budgetInference(final float qual, final float complexity, final org.opennars.control.DerivationContext nal) {
-        Item t = nal.getCurrentTaskLink();
+        Item t = nal.getCurrentTask();
         if (t == null) {
             t = nal.getCurrentTask();
         }
-        float priority = t.getPriority();
-        float durability = t.getDurability() / complexity;
-        final float quality = qual / complexity;
-        final TermLink bLink = nal.getCurrentBeliefLink();
-        if (bLink != null) {
-            priority = or(priority, bLink.getPriority());
-            durability = and(durability, bLink.getDurability());
-            final float targetActivation = conceptActivation(nal.memory, bLink.target);
-            bLink.incPriority(or(quality, targetActivation));
-            bLink.incDurability(quality);
-        }
+        Concept c = nal.getCurrentConcept();
+        TruthValue beliefTruth = nal.getCurrentBelief() == null ? new TruthValue(1.0f,0.9f, nal.narParameters) : nal.getCurrentBelief().truth;
+        float priority = c.getPriority() * beliefTruth.getExpectation();
+        float durability = t.getDurability();
+        //float durability = t.getDurability() / complexity;
+        final float quality = qual / complexity; //not used in ALANN though
         return new BudgetValue(priority, durability, quality, nal.narParameters);
     }
 

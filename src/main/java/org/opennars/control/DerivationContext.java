@@ -392,34 +392,6 @@ public class DerivationContext {
     }
 
     /**
-     * @return the currentBeliefLink
-     */
-    public TermLink getCurrentBeliefLink() {
-        return currentBeliefLink;
-    }
-
-    /**
-     * @param currentBeliefLink the currentBeliefLink to set
-     */
-    public void setCurrentBeliefLink(final TermLink currentBeliefLink) {
-        this.currentBeliefLink = currentBeliefLink;
-    }
-
-    /**
-     * @return the currentTaskLink
-     */
-    public TaskLink getCurrentTaskLink() {
-        return currentTaskLink;
-    }
-
-    /**
-     * @param currentTaskLink the currentTaskLink to set
-     */
-    public void setCurrentTaskLink(final TaskLink currentTaskLink) {
-        this.currentTaskLink = currentTaskLink;
-    }
-
-    /**
      * @return the currentTerm
      */
     public Term getCurrentTerm() {

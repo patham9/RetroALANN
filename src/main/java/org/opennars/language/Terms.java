@@ -364,7 +364,7 @@ public class Terms {
      * @param type The type of TermLink to be built
      * @param term The CompoundTerm for which the links are built
      */
-    public static List<TermLink> prepareComponentLinks(final List<TermLink> componentLinks, final short type, final CompoundTerm term) {
+    public static List<Term> prepareComponents(final List<Term> components, final short type, final CompoundTerm term) {
         
         final boolean tEquivalence = (term instanceof Equivalence);
         final boolean tImplication = (term instanceof Implication);
@@ -379,10 +379,10 @@ public class Terms {
             
             
             if (!(t1 instanceof Variable)) {
-                componentLinks.add(new TermLink(type, t1, i));
+                components.add(term);
             }
             if ((tEquivalence || (tImplication && (i == 0))) && ((t1 instanceof Conjunction) || (t1 instanceof Negation))) {
-                prepareComponentLinks(componentLinks, TermLink.COMPOUND_CONDITION, (CompoundTerm) t1);
+                prepareComponents(components, TermLink.COMPOUND_CONDITION, (CompoundTerm) t1);
             } else if (t1 instanceof CompoundTerm) {
                 final CompoundTerm ct1 = (CompoundTerm)t1;
                 final int ct1Size = ct1.size(); //cache because this loop is critical
@@ -400,12 +400,12 @@ public class Terms {
                     if (!t2.hasVar()) {
                         if (t1ProductOrImage) {
                             if (type == TermLink.COMPOUND_CONDITION) {
-                                componentLinks.add(new TermLink(TermLink.TRANSFORM, t2, 0, i, j));
+                                components.add(t2);
                             } else {
-                                componentLinks.add(new TermLink(TermLink.TRANSFORM, t2, i, j));
+                                components.add(t2);
                             }
                         } else {
-                            componentLinks.add(new TermLink(type, t2, i, j));
+                            components.add(t2);
                         }
                     }
                     if ((t2 instanceof Product) || (t2 instanceof ImageExt) || (t2 instanceof ImageInt)) {
@@ -423,9 +423,9 @@ public class Terms {
 
                             if (!t3.hasVar()) {
                                 if (type == TermLink.COMPOUND_CONDITION) {
-                                    componentLinks.add(new TermLink(TermLink.TRANSFORM, t3, 0, i, j, k));
+                                    components.add(t3);
                                 } else {
-                                    componentLinks.add(new TermLink(TermLink.TRANSFORM, t3, i, j, k));
+                                    components.add(t3);
                                 }
                             }
                         }
@@ -433,12 +433,12 @@ public class Terms {
                 }
             }
         }
-        return componentLinks;
+        return components;
     }
 
-   public  static List<TermLink> prepareComponentLinks(final List<TermLink> componentLinks, final CompoundTerm ct) {
+   public  static List<Term> prepareComponents(final List<Term> components, final CompoundTerm ct) {
         final short type = (ct instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND;   // default
-        return prepareComponentLinks(componentLinks, type, ct);
+        return prepareComponents(components, type, ct);
     }
 
     //TODO move this to a utility method

@@ -45,7 +45,7 @@ import org.opennars.language.Term;
 import org.opennars.operator.Operator;
 import org.opennars.plugin.Plugin;
 import org.opennars.plugin.perception.SensoryChannel;
-import org.opennars.storage.LevelBag;
+import org.opennars.storage.PriorityMap;
 import org.opennars.storage.Memory;
 import org.xml.sax.SAXException;
 
@@ -57,8 +57,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opennars.language.SetInt;
-import org.opennars.plugin.mental.Emotions;
-import org.opennars.plugin.mental.InternalExperience;
 
 
 /**
@@ -83,7 +81,7 @@ public class Nar extends SensoryChannel implements Reasoner, Serializable, Runna
     /**
      * The information about the version and date of the project.
      */
-    public static final String VERSION = "Open-NARS v3.0.0";
+    public static final String VERSION = "RetroALANN v0.1.0";
 
     /**
      * The project web sites.
@@ -194,10 +192,7 @@ public class Nar extends SensoryChannel implements Reasoner, Serializable, Runna
             NoSuchMethodException, ParserConfigurationException, SAXException, IllegalAccessException, ParseException, ClassNotFoundException {
         List<Plugin> pluginsToAdd = ConfigReader.loadParamsFromFileAndReturnPlugins(relativeConfigFilePath, this, this.narParameters);
         final Memory m = new Memory(this.narParameters,
-                new LevelBag(narParameters.CONCEPT_BAG_LEVELS, narParameters.CONCEPT_BAG_SIZE, this.narParameters),
-                new LevelBag<>(narParameters.NOVEL_TASK_BAG_LEVELS, narParameters.NOVEL_TASK_BAG_SIZE, this.narParameters),
-                new LevelBag<>(narParameters.SEQUENCE_BAG_LEVELS, narParameters.SEQUENCE_BAG_SIZE, this.narParameters),
-                new LevelBag<>(narParameters.OPERATION_BAG_LEVELS, narParameters.OPERATION_BAG_SIZE, this.narParameters));
+                new PriorityMap<Term,Concept>(narParameters.CONCEPT_BAG_SIZE));
         this.memory = m;
         this.memory.narId = narId;
         this.usedConfigFilePath = relativeConfigFilePath;
@@ -488,14 +483,6 @@ public class Nar extends SensoryChannel implements Reasoner, Serializable, Runna
         if (p instanceof Operator) {
             memory.addOperator((Operator)p);
         }
-        else
-        if(p instanceof Emotions) {
-            memory.emotion = (Emotions) p;
-        }
-        else
-        if(p instanceof InternalExperience) {
-            memory.internalExperience = (InternalExperience) p;
-        }
         final PluginState ps = new PluginState(p);
         plugins.add(ps);
         emit(Events.PluginsChange.class, p, null);
@@ -553,7 +540,6 @@ public class Nar extends SensoryChannel implements Reasoner, Serializable, Runna
 
     /** Execute a fixed number of cycles.*/
     public void cycles(final int cycles) {
-        memory.allowExecution = true;
         emit(CyclesStart.class);
         final boolean wasRunning = running;
         running = true;

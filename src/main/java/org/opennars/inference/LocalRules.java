@@ -126,7 +126,7 @@ public class LocalRules {
         boolean useNewBeliefTerm = intervalProjection(nal, newBelief.getTerm(), oldBelief.getTerm(), beliefConcept, newTruth);
         
         final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth, nal.narParameters);
-        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, feedbackToLinks, nal);
+        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, nal);
         
         if (budget.aboveThreshold()) {
             return nal.doublePremiseTaskRevised(useNewBeliefTerm ? newBelief.term : oldBelief.term, truth, budget);
@@ -209,9 +209,9 @@ public class LocalRules {
             final float newQ = solutionQuality(rateByConfidence, task, belief, memory, nal.time);
             final float oldQ = solutionQuality(rateByConfidence, task, oldBest, memory, nal.time);
             if (oldQ >= newQ) {
-                if (problem.isGoal() && memory.emotion != null) {
-                    memory.emotion.adjustSatisfaction(oldQ, task.getPriority(), nal);
-                }
+                //if (problem.isGoal() && memory.emotion != null) {
+                //    memory.emotion.adjustSatisfaction(oldQ, task.getPriority(), nal);
+                //}
                 memory.emit(Unsolved.class, task, belief, "Lower quality");               
                 return false;
             }
@@ -296,9 +296,9 @@ public class LocalRules {
         final boolean rateByConfidence = problem.getTerm().hasVarQuery(); //here its whether its a what or where question for budget adjustment
         final float quality = solutionQuality(rateByConfidence, problem, solution, nal.mem(), nal.time);
         
-        if (problem.sentence.isGoal() && nal.memory.emotion != null) {
-            nal.memory.emotion.adjustSatisfaction(quality, task.getPriority(), nal);
-        }
+        //if (problem.sentence.isGoal() && nal.memory.emotion != null) {
+        //    nal.memory.emotion.adjustSatisfaction(quality, task.getPriority(), nal);
+        //}
         
         if (judgmentTask) {
             task.incPriority(quality);
@@ -306,12 +306,6 @@ public class LocalRules {
             final float taskPriority = task.getPriority(); //+goal satisfication is a matter of degree - https://groups.google.com/forum/#!topic/open-nars/ZfCM416Dx1M
             budget = new BudgetValue(UtilityFunctions.or(taskPriority, quality), task.getDurability(), BudgetFunctions.truthToQuality(solution.truth), nal.narParameters);
             task.setPriority(Math.min(1 - quality, taskPriority));
-        }
-        if (feedbackToLinks) {
-            final TaskLink tLink = nal.getCurrentTaskLink();
-            tLink.setPriority(Math.min(1 - quality, tLink.getPriority()));
-            final TermLink bLink = nal.getCurrentBeliefLink();
-            bLink.incPriority(quality);
         }
         return budget;
     }
