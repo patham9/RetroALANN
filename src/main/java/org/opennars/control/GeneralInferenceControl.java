@@ -52,7 +52,7 @@ public class GeneralInferenceControl {
     }
     
     public static void matchQuestion(Task t, Sentence belief, DerivationContext nal) {
-        LocalRules.trySolution(belief, t, nal, true);
+        LocalRules.trySolution(belief, t, nal, t.isInput());
     }
     
     public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept taskConcept, Sentence belief) {
