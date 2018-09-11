@@ -28,6 +28,7 @@ import java.util.List;
 import org.opennars.entity.Concept;
 import org.opennars.entity.Sentence;
 import org.opennars.entity.Task;
+import org.opennars.inference.LocalRules;
 import org.opennars.inference.RuleTables;
 import org.opennars.interfaces.Timable;
 import org.opennars.language.CompoundTerm;
@@ -50,16 +51,24 @@ public class GeneralInferenceControl {
         }
     }
     
+    public static void matchQuestion(Task t, Sentence belief, DerivationContext nal) {
+        LocalRules.trySolution(belief, t, nal, true);
+    }
+    
     public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept taskConcept, Sentence belief) {
         //Create a derivation context that works with OpenNARS "deriver":
-        DerivationContext cont = new DerivationContext(mem, mem.narParameters, time);
-        cont.setCurrentTask(task);
-        cont.setCurrentTerm(taskConceptTerm);
-        cont.setCurrentConcept(taskConcept);
-        cont.setCurrentBelief(belief);
-        cont.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
+        DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
+        nal.setCurrentTask(task);
+        nal.setCurrentTerm(taskConceptTerm);
+        nal.setCurrentConcept(taskConcept);
+        nal.setCurrentBelief(belief);
+        nal.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
+        //see whether belief answers question:
+        if(!task.sentence.isJudgment()) {
+            matchQuestion(task, belief, nal);
+        }
         //and fire rule table with the derivation context and our premise pair
-        RuleTables.reason(task, belief, subterm, cont);
+        RuleTables.reason(task, belief, subterm, nal);
     }
     
     public static void fireTask(Task task, Memory mem, Timable time) {

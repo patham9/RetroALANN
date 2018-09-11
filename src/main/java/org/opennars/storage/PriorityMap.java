@@ -34,8 +34,8 @@ import java.util.Map;
 import org.opennars.inference.BudgetFunctions;
 
 public class PriorityMap<K,V extends Item<K>> implements Serializable {
-    final MinMaxPriorityQueue<V> queue;
-    final Map<K,V> theMap; 
+    public final MinMaxPriorityQueue<V> queue;
+    public final Map<K,V> theMap; 
     final int maxSize;
     public PriorityMap(int maxSize) {
         this.maxSize = maxSize;
