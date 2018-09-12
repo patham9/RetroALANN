@@ -115,8 +115,8 @@ public class RuleTables {
         
         
         //simulate tasklinks as being linked from different locations
-        TermLink[] tlinks = taskConcept.termLinkTemplates.values().toArray(new TermLink[0]);
-        for(int i=0; i<tlinks.length; i++) { //all termlinks that could be there
+        //TermLink[] tlinks = taskConcept.termLinkTemplates.values().toArray(new TermLink[0]);
+        //for(int i=0; i<tlinks.length; i++) { //all termlinks that could be there
             
             
             TermLink template = taskConcept.termLinkTemplates.get(beliefTerm);
@@ -125,11 +125,11 @@ public class RuleTables {
                 termLink = new TermLink(template.target, template, task.budget.clone());
             }
             if(!taskConcept.termLinkTemplates.containsKey(beliefTerm) &&
-                    beliefConcept != null && beliefConcept.termLinkTemplates.containsKey(tlinks[i].target)) {
-                termLink = new TermLink(beliefTerm, beliefConcept.termLinkTemplates.get(tlinks[i].target), task.budget.clone());
+                    beliefConcept != null && beliefConcept.termLinkTemplates.containsKey(nal.getCurrentConcept().getTerm())) {
+                termLink = new TermLink(beliefTerm, beliefConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone());
             } else {
                 if(termLink == null) {
-                    continue;
+                    return;
                 }
             }
             
@@ -150,7 +150,7 @@ public class RuleTables {
                         new TermLink(task.getTerm(), task.budget), 
                         nal, task, taskSentence, taskTerm, beliefTerm, belief);
             }*/
-        }
+        //}
     }
 
     private static void applyRuleTable(TaskLink tLink, TermLink bLink, DerivationContext nal, Task task, Sentence taskSentence, Term taskTerm, Term beliefTerm, Sentence belief) {
