@@ -2,7 +2,7 @@
 
 <config>
     <!-- NarParameters -->
-    <conf name="NOVELTY_HORIZON" value="10000"/>
+    <conf name="NOVELTY_HORIZON" value="10"/>
     <conf name="DECISION_THRESHOLD" value="0.51"/>
     <conf name="CONCEPT_BAG_SIZE" value="10000"/>
     <conf name="CONCEPT_BAG_LEVELS" value="1000"/>

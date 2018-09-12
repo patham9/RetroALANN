@@ -52,7 +52,7 @@ public class RuleTables {
      * @param tLink The selected TaskLink, which will provide a task
      * @param bLink The selected TermLink, which may provide a belief
      */
-    public static void reason(final Task task, final Sentence belief, Term subterm, final DerivationContext nal) {
+    public static void reason(final Task task, final Sentence belief, Term beliefTerm, final DerivationContext nal) {
 
         // REFACTOR< the body should be split into another static function >
 
@@ -60,7 +60,6 @@ public class RuleTables {
         final Sentence taskSentence = task.sentence;
         
         final Term taskTerm = taskSentence.term;         // cloning for substitution
-        Term beliefTerm = belief.term;       // cloning for substitution
         
         final Concept beliefConcept = memory.concept(beliefTerm);
         Concept taskConcept = memory.concept(taskTerm);
@@ -112,13 +111,45 @@ public class RuleTables {
             return;
         }*/
         
-        TaskLink virtualTaskLink = new TaskLink(task, taskConcept.termLinkTemplates.get(subterm), task.budget, 1); //always SELF, as if task is innate!
-        transformTask(virtualTaskLink, nal);
-        for(Term template : taskConcept.termLinkTemplates.keySet()) { //all termlinks that could be there
-            TermLink virtualTermLink = taskConcept.termLinkTemplates.get(template);
-            if(virtualTermLink != null) {
-                applyRuleTable(virtualTaskLink, virtualTermLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+        TermLink termLink = null;
+        
+        
+        //simulate tasklinks as being linked from different locations
+        TermLink[] tlinks = taskConcept.termLinkTemplates.values().toArray(new TermLink[0]);
+        for(int i=0; i<tlinks.length; i++) { //all termlinks that could be there
+            
+            
+            TermLink template = taskConcept.termLinkTemplates.get(beliefTerm);
+            TermLink structuralTermLink = template;
+            if(template != null) {
+                termLink = new TermLink(template.target, template, task.budget.clone());
             }
+            if(!taskConcept.termLinkTemplates.containsKey(beliefTerm) &&
+                    beliefConcept != null && beliefConcept.termLinkTemplates.containsKey(tlinks[i].target)) {
+                termLink = new TermLink(beliefTerm, beliefConcept.termLinkTemplates.get(tlinks[i].target), task.budget.clone());
+            } else {
+                if(termLink == null) {
+                    continue;
+                }
+            }
+            
+            TaskLink myTaskLink = new TaskLink(task, new TermLink(task.getTerm(), taskConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone()), task.budget, 1);
+            
+            TaskLink virtualTaskLink = myTaskLink;/*i==tlinks.length ? new TaskLink(task, null, task.budget, 1) :*/ 
+                    //new TaskLink(task, null 
+                            /*termLink*/
+                            //, task.budget, 1); //always SELF, as if task is innate!
+           // if(!task.sentence.stamp.evidenceIsCyclic()) { //only "SELF" tasklink gets transformed
+            if(structuralTermLink != null) {// && structuralTermLink.type == TermLink.TRANSFORM) {
+               transformTask(new TaskLink(task, structuralTermLink, task.budget.clone(), 1), nal);
+            }
+            applyRuleTable(virtualTaskLink, termLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+            /*if(belief != null) {
+                TaskLink otherDirectionTask =  new TaskLink(new Task(belief,task.getBudget().clone(),task.isInput() ? Task.EnumType.INPUT : Task.EnumType.DERIVED), termLink, task.getBudget().clone(), 1);//belief as task
+                applyRuleTable(virtualTaskLink, 
+                        new TermLink(task.getTerm(), task.budget), 
+                        nal, task, taskSentence, taskTerm, beliefTerm, belief);
+            }*/
         }
     }
 

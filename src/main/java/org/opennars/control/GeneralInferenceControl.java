@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.opennars.entity.Concept;
 import org.opennars.entity.Sentence;
+import org.opennars.entity.Stamp;
 import org.opennars.entity.Task;
 import org.opennars.inference.LocalRules;
 import org.opennars.inference.RuleTables;
@@ -59,16 +60,20 @@ public class GeneralInferenceControl {
         }
     }
     
-    public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept taskConcept, Sentence belief) {
+    public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief) {
         //Create a derivation context that works with OpenNARS "deriver":
         DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
         nal.setCurrentTask(task);
         nal.setCurrentTerm(taskConceptTerm);
-        nal.setCurrentConcept(taskConcept);
+        nal.setCurrentConcept(beliefConcept);
         nal.setCurrentBelief(belief);
-        nal.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
+        if(belief != null) {
+            nal.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
+        } else {
+            nal.setTheNewStamp(new Stamp(task.sentence.stamp, time.time()));
+        }
         //see whether belief answers question:
-        if(!task.sentence.isJudgment()) {
+        if(!task.sentence.isJudgment() && belief != null) {
             matchQuestion(task, belief, nal);
         }
         //and fire rule table with the derivation context and our premise pair
@@ -89,10 +94,15 @@ public class GeneralInferenceControl {
         //fire all beliefs of all of the subterm components
         for(Term subterm : taskConcept.termLinkTemplates.keySet()) {
             Concept beliefConcept = mem.concept(subterm);
+            if(beliefConcept == null) {
+                continue;
+            }
             for(Task beliefT : beliefConcept.beliefs) {
                 Sentence belief = beliefT.sentence;
-                fireBelief(mem, time, task, taskConceptTerm, subterm, taskConcept, belief);
+                fireBelief(mem, time, task, taskConceptTerm, belief.term, beliefConcept, belief);
             }
+            //virtual premise:
+            fireBelief(mem, time, task, taskConceptTerm, subterm, beliefConcept, null);
         }
     }
     
