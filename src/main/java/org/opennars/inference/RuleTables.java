@@ -113,10 +113,12 @@ public class RuleTables {
         }*/
         
         TaskLink virtualTaskLink = new TaskLink(task, taskConcept.termLinkTemplates.get(subterm), task.budget, 1); //always SELF, as if task is innate!
-        TermLink virtualTermLink = taskConcept.termLinkTemplates.get(subterm);
         transformTask(virtualTaskLink, nal);
-        if(virtualTermLink != null) {
-            applyRuleTable(virtualTaskLink, virtualTermLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+        for(Term template : taskConcept.termLinkTemplates.keySet()) { //all termlinks that could be there
+            TermLink virtualTermLink = taskConcept.termLinkTemplates.get(template);
+            if(virtualTermLink != null) {
+                applyRuleTable(virtualTaskLink, virtualTermLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+            }
         }
     }
 

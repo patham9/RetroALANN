@@ -111,6 +111,11 @@ public class DerivationContext {
 
         final Stamp stamp = task.sentence.stamp;
         
+        if(stamp.evidenceIsCyclic()) {
+             memory.removeTask(task, "Cyclic Evidenctal Base");
+             return false;
+        }
+        
         //its revision, of course its cyclic, apply evidental base policy
         if(!overlapAllowed) { //todo reconsider
             final int stampLength = stamp.baseLength;
@@ -282,7 +287,7 @@ public class DerivationContext {
             return false;
         }
         
-        final Stamp derive_stamp = this.getTheNewStamp().clone();
+        final Stamp derive_stamp = this.getTheNewStamp().clone();        
         this.resetOccurrenceTime(); //stamp was already obsorbed into task
 
         final Sentence newSentence = new Sentence(
