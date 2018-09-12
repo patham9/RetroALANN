@@ -62,9 +62,6 @@ public class RuleTables {
         final Term taskTerm = taskSentence.term;         // cloning for substitution
         Term beliefTerm = belief.term;       // cloning for substitution
         
-        final Term tasklinkTerm = CompoundTerm.replaceIntervals(taskSentence.term);         // cloning for substitution
-        Term beliefLinkTerm = CompoundTerm.replaceIntervals(belief.term);       // cloning for substitution
-        
         final Concept beliefConcept = memory.concept(beliefTerm);
         Concept taskConcept = memory.concept(taskTerm);
         
@@ -117,6 +114,7 @@ public class RuleTables {
         
         TaskLink virtualTaskLink = new TaskLink(task, taskConcept.termLinkTemplates.get(subterm), task.budget, 1); //always SELF, as if task is innate!
         TermLink virtualTermLink = taskConcept.termLinkTemplates.get(subterm);
+        transformTask(virtualTaskLink, nal);
         if(virtualTermLink != null) {
             applyRuleTable(virtualTaskLink, virtualTermLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
         }
