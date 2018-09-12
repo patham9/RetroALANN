@@ -31,8 +31,10 @@ import org.opennars.entity.Task;
 import org.opennars.inference.LocalRules;
 import org.opennars.inference.RuleTables;
 import org.opennars.interfaces.Timable;
+import org.opennars.io.Symbols;
 import org.opennars.language.CompoundTerm;
 import org.opennars.language.Term;
+import org.opennars.language.Variables;
 import org.opennars.storage.Memory;
 
 /**
@@ -52,7 +54,9 @@ public class GeneralInferenceControl {
     }
     
     public static void matchQuestion(Task t, Sentence belief, DerivationContext nal) {
-        LocalRules.trySolution(belief, t, nal, t.isInput());
+        if(Variables.unify(Symbols.VAR_QUERY, new Term[] {t.getTerm(), belief.getTerm()})) {
+            LocalRules.trySolution(belief, t, nal, t.isInput());
+        }
     }
     
     public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept taskConcept, Sentence belief) {

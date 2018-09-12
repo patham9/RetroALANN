@@ -360,6 +360,9 @@ public final class StructuralRules {
         final Memory memory = nal.mem();
         Term subject = inh.getSubject();
         Term predicate = inh.getPredicate();
+        if(indices.length - 2 < 0 || indices.length -1 >= indices.length) {
+            return;
+        }
         final short index = indices[indices.length - 1];
         final short side = indices[indices.length - 2];
         if (inh.equals(oldContent)) {
