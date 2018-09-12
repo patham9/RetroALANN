@@ -86,6 +86,9 @@ public class GeneralInferenceControl {
         //conceptualize task concept, and add (in case of belief) as belief to all subterm component concepts:
         Concept taskConcept = mem.conceptualize(task.budget, taskConceptTerm);
         taskConcept.addToBeliefsConceptualizingComponents(task, mem.narParameters);
+        //apply forgetting:
+        Concept ret = mem.concepts.take(taskConceptTerm);
+        mem.concepts.putBack(ret, mem.narParameters.CONCEPT_FORGET_DURATIONS, mem);
         //but we don't use the concept for inference if it has fired less than NOVELTY_HORIZON ago already
         if(time.time() - taskConcept.lastFireTime < mem.narParameters.NOVELTY_HORIZON) {
             return;
