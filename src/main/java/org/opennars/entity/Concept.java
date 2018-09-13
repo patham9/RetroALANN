@@ -158,7 +158,7 @@ public class Concept extends Item<Term> implements Serializable {
     public void addToBeliefsConceptualizingComponents(final Task task, final Parameters narParameters) {
         //memory.conceptualize(task.budget, CompoundTerm.replaceIntervals(task.getTerm()));
         if(task.sentence.isJudgment()) {
-            this.addToTable(task, true, beliefs, narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
+            this.addToTable(task, false, beliefs, narParameters.CONCEPT_BELIEFS_MAX, Events.ConceptBeliefAdd.class, Events.ConceptBeliefRemove.class);
         }
         if (!(term instanceof CompoundTerm)) {
             return;
