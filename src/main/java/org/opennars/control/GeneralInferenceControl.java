@@ -45,11 +45,13 @@ import org.opennars.storage.Memory;
  */
 public class GeneralInferenceControl {
     
+    static DerivationContext lastNAL = null;
     public static void addTask(Memory mem, Task t, boolean derived) {
         //results go into into cyclingTasks, inputs to inputTasks
         if(derived) {
-            mem.conceptualize(t);
+            Concept c = mem.conceptualize(t);
             mem.cyclingTasks.putIn(t);
+            Concept.executeDecision(lastNAL, t);
         } else {
             mem.inputTasks.add(t);
         }
@@ -64,6 +66,7 @@ public class GeneralInferenceControl {
     public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief, boolean temporalInference) {
         //Create a derivation context that works with OpenNARS "deriver":
         DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
+        lastNAL = nal;
         nal.setCurrentTask(task);
         nal.setCurrentTerm(taskConceptTerm);
         nal.setCurrentConcept(beliefConcept);

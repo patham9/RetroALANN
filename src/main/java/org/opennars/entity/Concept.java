@@ -40,7 +40,11 @@ import java.util.List;
 import java.util.Map;
 import static org.opennars.inference.BudgetFunctions.rankBelief;
 import org.opennars.io.events.Events;
+import org.opennars.language.Product;
 import org.opennars.main.Parameters;
+import org.opennars.operator.FunctionOperator;
+import org.opennars.operator.Operation;
+import org.opennars.operator.Operator;
 
 /**
  * Concept as defined by the NARS-theory
@@ -316,5 +320,46 @@ public class Concept extends Item<Term> implements Serializable {
     /** returns unmodifidable collection wrapping beliefs */
     public List<Task> getBeliefs() {
         return Collections.unmodifiableList(beliefs);
+    }
+    
+    public static boolean executeDecision(DerivationContext nal, final Task t) {            
+        Term content = t.getTerm();
+        if(!t.sentence.isGoal()) {
+            return false;
+        }
+        Sentence g2 = t.sentence.projection(nal.time.time(), nal.time.time(), nal.memory);
+        if(g2.truth.getExpectation() < nal.narParameters.DECISION_THRESHOLD) {
+            return false;
+        }
+        if(content instanceof Operation) {
+
+            Operation op=(Operation)content;
+            Operator oper = op.getOperator();
+            Product prod = (Product) op.getSubject();
+            Term arg = prod.term[0];
+            if(oper instanceof FunctionOperator) {
+                for(int i=0;i<prod.term.length-1;i++) { //except last one, the output arg
+                    if(prod.term[i].hasVarDep() || prod.term[i].hasVarIndep()) {
+                        return false;
+                    }
+                }
+            } else {
+                if(content.hasVarDep() || content.hasVarIndep()) {
+                    return false;
+                }
+            }
+            if(!arg.equals(Term.SELF)) { //will be deprecated in the future
+                return false;
+            }
+
+            op.setTask(t);
+            if(!oper.call(op, nal.memory, nal.time)) {
+                return false;
+            }
+            System.out.println(t.toStringLong());
+            //this.memory.sequenceTasks = new LevelBag<>(Parameters.SEQUENCE_BAG_LEVELS, Parameters.SEQUENCE_BAG_SIZE);
+            return true;
+        }
+        return false;
     }
 }
