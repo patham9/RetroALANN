@@ -78,7 +78,8 @@ public class Concept extends Item<Term> implements Serializable {
      */
     public final Memory memory;
     
-
+    public Task event = null;
+    
     //use to create averaging stats of occurring intervals
     //so that revision can decide whether to use the new or old term
     //based on which intervals are closer to the average

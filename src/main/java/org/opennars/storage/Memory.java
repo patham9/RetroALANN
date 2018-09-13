@@ -105,6 +105,8 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
     
     public void reset() {
         event.emit(ResetStart.class);
+        this.concepts.queue.clear();
+        this.concepts.theMap.clear();
         resetStatic();
         event.emit(ResetEnd.class);
     }
@@ -138,7 +140,14 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
      * @param term indicating the concept
      * @return an existing Concept, or a new one, or null 
      */
-    public Concept conceptualize(final BudgetValue budget, Term term) {   
+    public Concept conceptualize(final Task task) {
+        Concept concept = conceptualize(task.budget, task.getTerm());
+        if(concept != null && !task.sentence.isEternal() && concept.getTerm().equals(CompoundTerm.replaceIntervals(task.getTerm()))) {
+            concept.event = task;
+        }
+        return concept;
+    }
+    public Concept conceptualize(final BudgetValue budget, Term term) {
         if(term instanceof Interval) {
             return null;
         }

@@ -255,7 +255,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         }
         Concept c = nal.getCurrentConcept();
         TruthValue beliefTruth = nal.getCurrentBelief() == null ? new TruthValue(1.0f,0.9f, nal.narParameters) : nal.getCurrentBelief().truth;
-        float priority = c.getPriority() * beliefTruth.getExpectation();
+        float priority = 0.01f+c.getPriority() * beliefTruth.getExpectation();
         float durability = t.getDurability();
         //float durability = t.getDurability() / complexity;
         final float quality = qual / complexity; //not used in ALANN though

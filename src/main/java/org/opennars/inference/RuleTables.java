@@ -54,7 +54,7 @@ public class RuleTables {
      * @param tLink The selected TaskLink, which will provide a task
      * @param bLink The selected TermLink, which may provide a belief
      */
-    public static void reason(final Task task, final Sentence belief, Term beliefTerm, final DerivationContext nal) {
+    public static void reason(final Task task, final Sentence belief, Term beliefTerm, final DerivationContext nal, boolean temporalInference) {
 
         // REFACTOR< the body should be split into another static function >
 
@@ -71,8 +71,8 @@ public class RuleTables {
         if (belief != null && beliefConcept != null) {   
             beliefTerm = belief.term; //because interval handling that differs on conceptual level
             
-          /*Sentence belief_event = beliefConcept.getBeliefForTemporalInference(task);
-            if(belief_event != null) {
+            Sentence belief_event = belief;
+            if(temporalInference && !task.sentence.isEternal() && belief_event != null && !belief_event.isEternal()) {
                 boolean found_overlap = false;
                 if(Stamp.baseOverlap(task.sentence.stamp.evidentialBase, belief_event.stamp.evidentialBase)) {
                     found_overlap = true;
@@ -81,12 +81,18 @@ public class RuleTables {
                                      //and since the temporal rule is relatively expensive the check here was good.
                     Sentence inference_belief = belief;
                     nal.setCurrentBelief(belief_event);
-                    nal.setTheNewStamp(task.sentence.stamp, belief_event.stamp, nal.memory.time());
-                    TemporalRules.temporalInduction(task.sentence, belief_event, nal, true);
+                    nal.setTheNewStamp(task.sentence.stamp, belief_event.stamp, nal.time.time());
+                    for(Task t : TemporalRules.temporalInduction(task.sentence, belief_event, nal, true, true, true)) {
+                        nal.addTask(t, "Derived");
+                    }
                     nal.setCurrentBelief(inference_belief);
-                    nal.setTheNewStamp(task.sentence.stamp, belief.stamp, nal.memory.time());
+                    nal.setTheNewStamp(task.sentence.stamp, belief.stamp, nal.time.time());
                 }
-            }*/
+            }
+            
+            if(temporalInference) {
+                return;
+            }
             
             //too restrictive, its checked for non-deductive inference rules in derivedTask (also for single prem)
             nal.evidentalOverlap = Stamp.baseOverlap(task.sentence.stamp.evidentialBase, belief.stamp.evidentialBase);
@@ -100,7 +106,9 @@ public class RuleTables {
                 return;
             }
         }
-        
+        if(temporalInference) {
+            return;
+        }
         //current belief and task may have changed, so set again:
         nal.setCurrentBelief(belief);
         nal.setCurrentTask(task);

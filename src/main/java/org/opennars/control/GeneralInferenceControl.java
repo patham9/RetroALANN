@@ -48,6 +48,7 @@ public class GeneralInferenceControl {
     public static void addTask(Memory mem, Task t, boolean derived) {
         //results go into into cyclingTasks, inputs to inputTasks
         if(derived) {
+            mem.conceptualize(t);
             mem.cyclingTasks.putIn(t);
         } else {
             mem.inputTasks.add(t);
@@ -60,7 +61,7 @@ public class GeneralInferenceControl {
         }
     }
     
-    public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief) {
+    public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief, boolean temporalInference) {
         //Create a derivation context that works with OpenNARS "deriver":
         DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
         nal.setCurrentTask(task);
@@ -77,18 +78,16 @@ public class GeneralInferenceControl {
             matchQuestion(task, belief, nal);
         }
         //and fire rule table with the derivation context and our premise pair
-        RuleTables.reason(task, belief, subterm, nal);
+        RuleTables.reason(task, belief, subterm, nal, temporalInference);
     }
     
-    public static void fireTask(Task task, Memory mem, Timable time) {
+    public static void fireTask(Task task, Memory mem, Timable time, List<Concept> highestPriorityConcepts) {
         //remove intervals, as concepts do not have them
         Term taskConceptTerm = CompoundTerm.replaceIntervals(task.getTerm());
-        //conceptualize task concept, and add (in case of belief) as belief to all subterm component concepts:
-        Concept taskConcept = mem.conceptualize(task.budget, taskConceptTerm);
+        //get task concept, and add (in case of belief) as belief to all subterm component concepts which get created if not existent:
+        Concept taskConcept = mem.conceptualize(task);
         taskConcept.addToBeliefsConceptualizingComponents(task, mem.narParameters);
-        //apply forgetting:
-        Concept ret = mem.concepts.take(taskConceptTerm);
-        mem.concepts.putBack(ret, mem.narParameters.CONCEPT_FORGET_DURATIONS, mem);
+        forgetConcept(mem, taskConceptTerm);
         //but we don't use the concept for inference if it has fired less than NOVELTY_HORIZON ago already
         if(time.time() - taskConcept.lastFireTime < mem.narParameters.NOVELTY_HORIZON) {
             return;
@@ -100,16 +99,46 @@ public class GeneralInferenceControl {
             if(beliefConcept == null) {
                 continue;
             }
+            forgetConcept(mem, subterm);
             for(Task beliefT : beliefConcept.beliefs) {
                 Sentence belief = beliefT.sentence;
-                fireBelief(mem, time, task, taskConceptTerm, belief.term, beliefConcept, belief);
+                fireBelief(mem, time, task, taskConceptTerm, belief.term, beliefConcept, belief, false);
             }
             //virtual premise:
-            fireBelief(mem, time, task, taskConceptTerm, subterm, beliefConcept, null);
+            fireBelief(mem, time, task, taskConceptTerm, subterm, beliefConcept, null, false);
         }
+        //fire highest priority concepts for temporal inference:
+        if(!task.sentence.isEternal() && task.sentence.isJudgment()) {
+            for(Concept temporalC : highestPriorityConcepts) {
+                if(temporalC.event != null) {
+                    Sentence belief = temporalC.event.sentence;
+                    fireBelief(mem, time, task, taskConceptTerm, belief.term, temporalC, belief, true);
+                }
+            }
+        }
+    }
+
+    public static void forgetConcept(Memory mem, Term taskConceptTerm) {
+        //apply forgetting:
+        Concept ret = mem.concepts.take(taskConceptTerm);
+        mem.concepts.putBack(ret, mem.narParameters.CONCEPT_FORGET_DURATIONS, mem);
     }
     
     public static void ALANNCircle(Memory mem, Timable time) {
+        //1. get the 10 highest priority concepts for temporal inference:
+        List<Concept> highestPriorityConcepts = new ArrayList<>();
+        for(int i=0; i<mem.narParameters.SEQUENCE_BAG_ATTEMPTS; i++) {
+            Concept highest = mem.concepts.takeHighestPriorityItem();
+            if(highest != null) {
+                highestPriorityConcepts.add(highest);
+            }
+        }
+        //and forget them a bit
+        for(Concept c : highestPriorityConcepts) {
+            mem.concepts.putBack(c, mem.narParameters.CONCEPT_FORGET_DURATIONS, mem);
+        }
+        
+        //Select tasks
         List<Task> selected = new ArrayList<>();
         for(int i=0; i<mem.narParameters.TASKS_MAX_FIRED; i++) {
             //check for input buffer element first
@@ -120,10 +149,14 @@ public class GeneralInferenceControl {
             else if(!mem.cyclingTasks.isEmpty()){
                 selected.add((Task) mem.cyclingTasks.takeHighestPriorityItem());
             }
-        }
+        }        
         //fire the task and put it back into cycling tasks
+        for(Task task: selected) {
+            //at first activate concept and replace with the input event task if it is one:
+            mem.conceptualize(task);
+        }
         for(Task task : selected) {
-            fireTask(task, mem, time);
+            fireTask(task, mem, time, highestPriorityConcepts);
             mem.cyclingTasks.putBack(task, mem.narParameters.TASKLINK_FORGET_DURATIONS, mem);
         }
     }
