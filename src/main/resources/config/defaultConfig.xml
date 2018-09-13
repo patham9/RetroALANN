@@ -39,10 +39,11 @@
     <conf name="TASK_LINK_BAG_SIZE" value="100"/>
     <conf name="TASK_LINK_BAG_LEVELS" value="10"/>
     
-    <conf name="TERM_LINK_BAG_SIZE" value="100"/>
+    <conf name="TERM_LINK_BAG_SIZE" value="200"/>
     <conf name="TERM_LINK_BAG_LEVELS" value="10"/>
     <conf name="TERM_LINK_MAX_MATCHED" value="10"/>
     <conf name="TASKS_MAX_FIRED" value="10"/>
+    <conf name="PREMISES_MAX_FIRED" value="100"/>
     
     <conf name="NOVEL_TASK_BAG_SIZE" value="100"/>
     <conf name="NOVEL_TASK_BAG_LEVELS" value="10"/>

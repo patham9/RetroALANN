@@ -82,6 +82,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
     /* List of new tasks accumulated in one cycle, to be processed in the next cycle */
     public final Deque<Task> inputTasks;
     public final PriorityMap cyclingTasks;
+    public final PriorityMap premiseQueue;
     
     //Boolean localInferenceMutex = false;
     
@@ -99,6 +100,7 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
         this.concepts = concepts;             
         this.inputTasks = new ArrayDeque<>();
         this.cyclingTasks = new PriorityMap(narParameters.TASK_LINK_BAG_SIZE);
+        this.premiseQueue = new PriorityMap(narParameters.TERM_LINK_BAG_SIZE);
         this.operators = new HashMap<>();
         reset();
     }
@@ -107,6 +109,11 @@ public class Memory implements Serializable, Iterable<Concept>, Resettable {
         event.emit(ResetStart.class);
         this.concepts.queue.clear();
         this.concepts.theMap.clear();
+        this.cyclingTasks.queue.clear();
+        this.cyclingTasks.theMap.clear();
+        this.inputTasks.clear();
+        this.premiseQueue.queue.clear();
+        this.premiseQueue.theMap.clear();
         resetStatic();
         event.emit(ResetEnd.class);
     }

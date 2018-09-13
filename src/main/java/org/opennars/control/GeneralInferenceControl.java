@@ -25,7 +25,9 @@ package org.opennars.control;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.opennars.entity.BudgetValue;
 import org.opennars.entity.Concept;
+import org.opennars.entity.Item;
 import org.opennars.entity.Sentence;
 import org.opennars.entity.Stamp;
 import org.opennars.entity.Task;
@@ -37,6 +39,7 @@ import org.opennars.language.CompoundTerm;
 import org.opennars.language.Term;
 import org.opennars.language.Variables;
 import org.opennars.storage.Memory;
+import org.opennars.storage.PriorityMap;
 
 /**
  *
@@ -63,25 +66,50 @@ public class GeneralInferenceControl {
         }
     }
     
+    public static class FireBelief extends Item<String> {
+        Memory mem; Timable time; Task task; Term taskConceptTerm; Term subterm; Concept beliefConcept; Sentence belief; boolean temporalInference;
+        public FireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief, boolean temporalInference) {
+            super(new BudgetValue(beliefConcept.getPriority() * (belief == null ? 0.5f : belief.getTruth().getExpectation()), mem.narParameters.TASKLINK_FORGET_DURATIONS, 0.0f, mem.narParameters));
+            this.mem = mem; this.time = time; this.task = task; this.taskConceptTerm = taskConceptTerm; this.subterm = subterm; this.beliefConcept = beliefConcept; this.belief = belief; this.temporalInference = temporalInference;
+        }
+        public void execute() {
+            //Create a derivation context that works with OpenNARS "deriver":
+            DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
+            lastNAL = nal;
+            nal.setCurrentTask(task);
+            nal.setCurrentTerm(taskConceptTerm);
+            nal.setCurrentConcept(beliefConcept);
+            nal.setCurrentBelief(belief);
+            if(belief != null) {
+                nal.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
+            } else {
+                nal.setTheNewStamp(new Stamp(task.sentence.stamp, time.time()));
+            }
+            //see whether belief answers question:
+            if(!task.sentence.isJudgment() && belief != null) {
+                matchQuestion(task, belief, nal);
+            }
+            //and fire rule table with the derivation context and our premise pair
+            RuleTables.reason(task, belief, subterm, nal, temporalInference);
+        }
+
+        @Override
+        public String name() {
+            return "FireBelief";
+        }
+        
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == this) return true;
+            return false;
+        }
+    }
+    
+    
     public static void fireBelief(Memory mem, Timable time, Task task, Term taskConceptTerm, Term subterm, Concept beliefConcept, Sentence belief, boolean temporalInference) {
-        //Create a derivation context that works with OpenNARS "deriver":
-        DerivationContext nal = new DerivationContext(mem, mem.narParameters, time);
-        lastNAL = nal;
-        nal.setCurrentTask(task);
-        nal.setCurrentTerm(taskConceptTerm);
-        nal.setCurrentConcept(beliefConcept);
-        nal.setCurrentBelief(belief);
-        if(belief != null) {
-            nal.setTheNewStamp(task.sentence.stamp, belief.stamp, time.time());
-        } else {
-            nal.setTheNewStamp(new Stamp(task.sentence.stamp, time.time()));
-        }
-        //see whether belief answers question:
-        if(!task.sentence.isJudgment() && belief != null) {
-            matchQuestion(task, belief, nal);
-        }
-        //and fire rule table with the derivation context and our premise pair
-        RuleTables.reason(task, belief, subterm, nal, temporalInference);
+        FireBelief premises = new FireBelief(mem,time,task,taskConceptTerm,subterm,beliefConcept,belief,temporalInference);
+        //add the potential derivation that can be done
+        mem.premiseQueue.putIn(premises);
     }
     
     public static void fireTask(Task task, Memory mem, Timable time, List<Concept> highestPriorityConcepts) {
@@ -161,6 +189,15 @@ public class GeneralInferenceControl {
         for(Task task : selected) {
             fireTask(task, mem, time, highestPriorityConcepts);
             mem.cyclingTasks.putBack(task, mem.narParameters.TASKLINK_FORGET_DURATIONS, mem);
+        }
+        //derive a batch of premises from the premises queue:
+        for(int i=0; i<mem.narParameters.PREMISES_MAX_FIRED; i++) {
+            FireBelief bel = (FireBelief) mem.premiseQueue.takeHighestPriorityItem();
+            if(bel != null) {
+                bel.execute();
+            } else {
+                break;
+            }
         }
     }
 }

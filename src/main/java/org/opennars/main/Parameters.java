@@ -119,11 +119,12 @@ public class Parameters implements Serializable {
     public int TASK_LINK_BAG_SIZE = 100;  //was 200 in new experiment
     public int TASK_LINK_BAG_LEVELS = 10;
     /** Size of TermLinkBag */
-    public int TERM_LINK_BAG_SIZE = 100;  //was 1000 in new experiment
+    public int TERM_LINK_BAG_SIZE = 200;  //was 1000 in new experiment
     public int TERM_LINK_BAG_LEVELS = 10;
     /** Maximum TermLinks checked for novelty for each TaskLink in TermLinkBag */
     public volatile int TERM_LINK_MAX_MATCHED = 10;
     public volatile int TASKS_MAX_FIRED = 10;
+    public volatile int PREMISES_MAX_FIRED = 100;
     /** Size of Novel Task Buffer */
     public int NOVEL_TASK_BAG_SIZE = 100;
     public int NOVEL_TASK_BAG_LEVELS = 10;
