@@ -23,6 +23,8 @@
  */
 package org.opennars.inference;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.opennars.control.DerivationContext;
 import org.opennars.entity.*;
 import org.opennars.io.Symbols;
@@ -111,46 +113,28 @@ public class RuleTables {
             return;
         }*/
         
-        TermLink termLink = null;
-        
-        
-        //simulate tasklinks as being linked from different locations
-        //TermLink[] tlinks = taskConcept.termLinkTemplates.values().toArray(new TermLink[0]);
-        //for(int i=0; i<tlinks.length; i++) { //all termlinks that could be there
+        List<TermLink> termLinks = new ArrayList<TermLink>();
             
-            
-            TermLink template = taskConcept.termLinkTemplates.get(beliefTerm);
-            TermLink structuralTermLink = template;
-            if(template != null) {
-                termLink = new TermLink(template.target, template, task.budget.clone());
-            }
-            if(!taskConcept.termLinkTemplates.containsKey(beliefTerm) &&
-                    beliefConcept != null && beliefConcept.termLinkTemplates.containsKey(nal.getCurrentConcept().getTerm())) {
-                termLink = new TermLink(beliefTerm, beliefConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone());
-            } else {
-                if(termLink == null) {
-                    return;
-                }
-            }
-            
-            TaskLink myTaskLink = new TaskLink(task, new TermLink(task.getTerm(), taskConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone()), task.budget, 1);
-            
-            TaskLink virtualTaskLink = myTaskLink;/*i==tlinks.length ? new TaskLink(task, null, task.budget, 1) :*/ 
-                    //new TaskLink(task, null 
-                            /*termLink*/
-                            //, task.budget, 1); //always SELF, as if task is innate!
-           // if(!task.sentence.stamp.evidenceIsCyclic()) { //only "SELF" tasklink gets transformed
-            if(structuralTermLink != null) {// && structuralTermLink.type == TermLink.TRANSFORM) {
-               transformTask(new TaskLink(task, structuralTermLink, task.budget.clone(), 1), nal);
-            }
+        TermLink structuralTermLink = taskConcept.termLinkTemplates.get(beliefTerm);
+        if(structuralTermLink != null) {
+            termLinks.add(new TermLink(structuralTermLink.target, structuralTermLink, task.budget.clone()));
+        }
+        if(!taskConcept.termLinkTemplates.containsKey(beliefTerm) &&
+                beliefConcept != null && beliefConcept.termLinkTemplates.containsKey(nal.getCurrentConcept().getTerm())) {
+            termLinks.add(new TermLink(beliefTerm, beliefConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone()));
+        }
+
+        //task term termlink template tasklink
+        TaskLink virtualTaskLink = new TaskLink(task, new TermLink(task.getTerm(), taskConcept.termLinkTemplates.get(nal.getCurrentConcept().getTerm()), task.budget.clone()), task.budget, 1);
+        if(structuralTermLink != null) {// && structuralTermLink.type == TermLink.TRANSFORM) {
+            TaskLink structuralTaskLink = new TaskLink(task, structuralTermLink, task.budget.clone(), 1);
+            transformTask(structuralTaskLink, nal);
+        }
+        for(TermLink termLink : termLinks)  {
             applyRuleTable(virtualTaskLink, termLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
-            /*if(belief != null) {
-                TaskLink otherDirectionTask =  new TaskLink(new Task(belief,task.getBudget().clone(),task.isInput() ? Task.EnumType.INPUT : Task.EnumType.DERIVED), termLink, task.getBudget().clone(), 1);//belief as task
-                applyRuleTable(virtualTaskLink, 
-                        new TermLink(task.getTerm(), task.budget), 
-                        nal, task, taskSentence, taskTerm, beliefTerm, belief);
-            }*/
-        //}
+            //other structural inference with task linked from its own concept: 
+            applyRuleTable(new TaskLink(task, null, task.budget.clone(), 1), termLink, nal, task, taskSentence, taskTerm, beliefTerm, belief);
+        }
     }
 
     private static void applyRuleTable(TaskLink tLink, TermLink bLink, DerivationContext nal, Task task, Sentence taskSentence, Term taskTerm, Term beliefTerm, Sentence belief) {
